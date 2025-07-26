@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Polyhedron Generator</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a1a;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        
+        #container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+        }
+        
+        #controls {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            max-width: 280px;
+        }
+        
+        .control-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: bold;
+        }
+        
+        input[type="range"] {
+            width: 200px;
+            margin-right: 10px;
+        }
+        
+        input[type="number"] {
+            width: 60px;
+            padding: 5px;
+            border: none;
+            border-radius: 3px;
+            background: #333;
+            color: white;
+        }
+        
+        select {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            border-radius: 4px;
+            background: #333;
+            color: white;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .info-display {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
+        
+        #zoom-controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            z-index: 100;
+        }
+        
+        .zoom-btn {
+            display: block;
+            width: 50px;
+            height: 50px;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            border: 2px solid #555;
+            border-radius: 8px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .zoom-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: #777;
+        }
+        
+        .zoom-btn:active {
+            transform: scale(0.95);
+        }
+        
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="controls">
+            <div class="control-group">
+                <label>Polyhedron Type:</label>
+                <select id="type-select">
+                    <option value="pyramid">Pyramid (n+1 vertices)</option>
+                    <option value="prism" selected>Prism (2n vertices)</option>
+                    <option value="antiprism">Antiprism (2n vertices)</option>
+                    <option value="spherical">Spherical Distribution (n vertices)</option>
+                    <option value="platonic">Platonic Solids (special n)</option>
+                </select>
+            </div>
+            
+            <div class="control-group">
+                <label>Number of Base Sides (n):</label>
+                <input type="range" id="n-slider" min="3" max="20" value="6">
+                <input type="number" id="n-input" min="3" max="50" value="6">
+            </div>
+            
+            <div class="info-display" id="polyhedron-info">
+                <strong>Hexagonal Prism</strong><br>
+                Base sides: 6<br>
+                Total vertices: 12<br>
+                Edges: 18<br>
+                Faces: 8
+            </div>
+        </div>
+        
+        <div id="zoom-controls">
+            <button class="zoom-btn" id="zoom-in">+</button>
+            <button class="zoom-btn" id="zoom-out">−</button>
+        </div>
+        
+        <div id="info">
+            <strong>Controls:</strong><br>
+            • Click and drag to rotate<br>
+            • Use +/− buttons to zoom<br>
+            • Red spheres mark vertices<br>
+            • Adjust n and type above
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x1a1a1a, 1);
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        document.getElementById('container').appendChild(renderer.domElement);
+        
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x404040, 0.6);
+        scene.add(ambientLight);
+        
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(10, 10, 5);
+        directionalLight.castShadow = true;
+        scene.add(directionalLight);
+        
+        const pointLight = new THREE.PointLight(0x4080ff, 0.5);
+        pointLight.position.set(-10, -10, -5);
+        scene.add(pointLight);
+        
+        // Create transparent sphere
+        const sphereRadius = 2.5;
+        const sphereGeometry = new THREE.SphereGeometry(sphereRadius, 64, 64);
+        const sphereMaterial = new THREE.MeshPhongMaterial({
+            color: 0x4080ff,
+            transparent: true,
+            opacity: 0.15,
+            wireframe: false,
+            side: THREE.DoubleSide
+        });
+        const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+        scene.add(sphere);
+        
+        // Variables for polyhedron
+        let polyhedron = null;
+        let vertices = [];
+        let vertexMarkers = [];
+        let edges = [];
+        
+        // Polyhedron generation functions
+        function generatePyramid(n) {
+            const vertices = [];
+            const faces = [];
+            const radius = 1.5;
+            const height = 1.2;
+            
+            // Base vertices
+            for (let i = 0; i < n; i++) {
+                const angle = (i / n) * Math.PI * 2;
+                vertices.push([
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius,
+                    -height / 2
+                ]);
+            }
+            
+            // Apex vertex
+            vertices.push([0, 0, height / 2]);
+            
+            // Base face
+            const baseFace = [];
+            for (let i = 0; i < n; i++) {
+                baseFace.push(i);
+            }
+            faces.push(baseFace);
+            
+            // Side faces
+            for (let i = 0; i < n; i++) {
+                faces.push([i, (i + 1) % n, n]);
+            }
+            
+            return {
+                vertices,
+                faces,
+                info: {
+                    vertices: n + 1,
+                    edges: 2 * n,
+                    faces: n + 1
+                }
+            };
+        }
+        
+        function generatePrism(n) {
+            const vertices = [];
+            const faces = [];
+            const radius = 1.5;
+            const height = 1.5;
+            
+            // Bottom base vertices
+            for (let i = 0; i < n; i++) {
+                const angle = (i / n) * Math.PI * 2;
+                vertices.push([
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius,
+                    -height / 2
+                ]);
+            }
+            
+            // Top base vertices
+            for (let i = 0; i < n; i++) {
+                const angle = (i / n) * Math.PI * 2;
+                vertices.push([
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius,
+                    height / 2
+                ]);
+            }
+            
+            // Bottom face
+            const bottomFace = [];
+            for (let i = 0; i < n; i++) {
+                bottomFace.push(i);
+            }
+            faces.push(bottomFace);
+            
+            // Top face
+            const topFace = [];
+            for (let i = 0; i < n; i++) {
+                topFace.push(n + i);
+            }
+            faces.push(topFace.reverse());
+            
+            // Side faces
+            for (let i = 0; i < n; i++) {
+                const next = (i + 1) % n;
+                faces.push([i, next, n + next, n + i]);
+            }
+            
+            return {
+                vertices,
+                faces,
+                info: {
+                    vertices: 2 * n,
+                    edges: 3 * n,
+                    faces: n + 2
+                }
+            };
+        }
+        
+        function generateAntiprism(n) {
+            const vertices = [];
+            const faces = [];
+            const radius = 1.5;
+            const height = 1.5;
+            
+            // Bottom base vertices
+            for (let i = 0; i < n; i++) {
+                const angle = (i / n) * Math.PI * 2;
+                vertices.push([
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius,
+                    -height / 2
+                ]);
+            }
+            
+            // Top base vertices (rotated by half step)
+            for (let i = 0; i < n; i++) {
+                const angle = ((i + 0.5) / n) * Math.PI * 2;
+                vertices.push([
+                    Math.cos(angle) * radius,
+                    Math.sin(angle) * radius,
+                    height / 2
+                ]);
+            }
+            
+            // Bottom face
+            const bottomFace = [];
+            for (let i = 0; i < n; i++) {
+                bottomFace.push(i);
+            }
+            faces.push(bottomFace);
+            
+            // Top face
+            const topFace = [];
+            for (let i = 0; i < n; i++) {
+                topFace.push(n + i);
+            }
+            faces.push(topFace.reverse());
+            
+            // Side triangular faces
+            for (let i = 0; i < n; i++) {
+                const next = (i + 1) % n;
+                // Two triangles per side
+                faces.push([i, next, n + i]);
+                faces.push([next, n + next, n + i]);
+            }
+            
+            return {
+                vertices,
+                faces,
+                info: {
+                    vertices: 2 * n,
+                    edges: 4 * n,
+                    faces: 2 * n + 2
+                }
+            };
+        }
+        
+        function generateSphericalDistribution(n) {
+            const vertices = [];
+            const faces = [];
+            const radius = 1.8;
+            
+            // Generate points distributed on sphere using spiral method
+            for (let i = 0; i < n; i++) {
+                const y = 1 - (i / (n - 1)) * 2; // y from 1 to -1
+                const radiusAtY = Math.sqrt(1 - y * y);
+                const theta = 3.6 * Math.sqrt(n) * i; // Golden angle spiral
+                
+                const x = Math.cos(theta) * radiusAtY;
+                const z = Math.sin(theta) * radiusAtY;
+                
+                vertices.push([x * radius, y * radius, z * radius]);
+            }
+            
+            // Create faces using Delaunay-like triangulation (simplified)
+            // For visualization, we'll create a convex hull approximation
+            for (let i = 0; i < n - 2; i++) {
+                for (let j = i + 1; j < n - 1; j++) {
+                    for (let k = j + 1; k < n; k++) {
+                        // Simple distance-based face creation
+                        const v1 = new THREE.Vector3(...vertices[i]);
+                        const v2 = new THREE.Vector3(...vertices[j]);
+                        const v3 = new THREE.Vector3(...vertices[k]);
+                        
+                        const d1 = v1.distanceTo(v2);
+                        const d2 = v2.distanceTo(v3);
+                        const d3 = v3.distanceTo(v1);
+                        
+                        // Only create face if all edges are reasonably short
+                        const maxDist = radius * 1.2;
+                        if (d1 < maxDist && d2 < maxDist && d3 < maxDist) {
+                            faces.push([i, j, k]);
+                        }
+                    }
+                }
+            }
+            
+            return {
+                vertices,
+                faces,
+                info: {
+                    vertices: n,
+                    edges: Math.max(0, faces.length * 3 / 2),
+                    faces: faces.length
+                }
+            };
+        }
+        
+        function generatePlatonicSolid(n) {
+            // Return appropriate Platonic solid based on vertex count
+            const phi = (1 + Math.sqrt(5)) / 2;
+            
+            switch(n) {
+                case 4: // Tetrahedron
+                    return {
+                        vertices: [
+                            [1, 1, 1],
+                            [1, -1, -1],
+                            [-1, 1, -1],
+                            [-1, -1, 1]
+                        ],
+                        faces: [[0, 1, 2], [0, 1, 3], [0, 2, 3], [1, 2, 3]],
+                        info: { vertices: 4, edges: 6, faces: 4 }
+                    };
+                case 6: // Octahedron
+                    return {
+                        vertices: [
+                            [1, 0, 0], [-1, 0, 0],
+                            [0, 1, 0], [0, -1, 0],
+                            [0, 0, 1], [0, 0, -1]
+                        ],
+                        faces: [
+                            [0, 2, 4], [0, 4, 3], [0, 3, 5], [0, 5, 2],
+                            [1, 4, 2], [1, 3, 4], [1, 5, 3], [1, 2, 5]
+                        ],
+                        info: { vertices: 6, edges: 12, faces: 8 }
+                    };
+                case 8: // Cube
+                    return {
+                        vertices: [
+                            [1, 1, 1], [1, 1, -1], [1, -1, 1], [1, -1, -1],
+                            [-1, 1, 1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1]
+                        ],
+                        faces: [
+                            [0, 1, 3, 2], [4, 6, 7, 5], [0, 4, 5, 1],
+                            [2, 3, 7, 6], [0, 2, 6, 4], [1, 5, 7, 3]
+                        ],
+                        info: { vertices: 8, edges: 12, faces: 6 }
+                    };
+                case 12: // Icosahedron
+                    return {
+                        vertices: [
+                            [0, 1, phi], [0, -1, phi], [0, 1, -phi], [0, -1, -phi],
+                            [1, phi, 0], [-1, phi, 0], [1, -phi, 0], [-1, -phi, 0],
+                            [phi, 0, 1], [phi, 0, -1], [-phi, 0, 1], [-phi, 0, -1]
+                        ],
+                        faces: [
+                            [0, 1, 8], [0, 8, 4], [0, 4, 5], [0, 5, 10], [0, 10, 1],
+                            [2, 3, 9], [2, 9, 4], [2, 4, 8], [2, 8, 6], [2, 6, 3],
+                            [1, 6, 8], [1, 7, 6], [1, 10, 7], [3, 6, 7], [3, 7, 11],
+                            [3, 11, 9], [4, 9, 5], [5, 9, 11], [5, 11, 10], [7, 10, 11]
+                        ],
+                        info: { vertices: 12, edges: 30, faces: 20 }
+                    };
+                case 20: // Dodecahedron
+                    const a = 1 / phi;
+                    return {
+                        vertices: [
+                            [1, 1, 1], [1, 1, -1], [1, -1, 1], [1, -1, -1],
+                            [-1, 1, 1], [-1, 1, -1], [-1, -1, 1], [-1, -1, -1],
+                            [0, a, phi], [0, -a, phi], [0, a, -phi], [0, -a, -phi],
+                            [a, phi, 0], [-a, phi, 0], [a, -phi, 0], [-a, -phi, 0],
+                            [phi, 0, a], [phi, 0, -a], [-phi, 0, a], [-phi, 0, -a]
+                        ],
+                        faces: [
+                            [0, 8, 9, 2, 16], [0, 16, 17, 1, 12], [12, 1, 10, 11, 3],
+                            [9, 6, 15, 14, 2], [8, 4, 18, 6, 9], [16, 2, 14, 17],
+                            [4, 8, 0, 12, 13], [6, 18, 19, 7, 15], [1, 17, 10],
+                            [11, 7, 19, 5, 3], [5, 19, 18, 4, 13], [15, 7, 11, 3, 14]
+                        ],
+                        info: { vertices: 20, edges: 30, faces: 12 }
+                    };
+                default:
+                    // Fallback to spherical distribution
+                    return generateSphericalDistribution(n);
+            }
+        }
+        
+        // Main polyhedron creation function
+        function createPolyhedron(type, n) {
+            // Remove existing polyhedron and markers
+            if (polyhedron) {
+                scene.remove(polyhedron);
+            }
+            vertexMarkers.forEach(marker => scene.remove(marker));
+            vertexMarkers = [];
+            edges.forEach(edge => scene.remove(edge));
+            edges = [];
+            
+            let data;
+            let name;
+            
+            switch(type) {
+                case 'pyramid':
+                    data = generatePyramid(n);
+                    name = `${n}-gonal Pyramid`;
+                    break;
+                case 'prism':
+                    data = generatePrism(n);
+                    name = `${n}-gonal Prism`;
+                    break;
+                case 'antiprism':
+                    data = generateAntiprism(n);
+                    name = `${n}-gonal Antiprism`;
+                    break;
+                case 'spherical':
+                    data = generateSphericalDistribution(n);
+                    name = `Spherical Distribution (${n} points)`;
+                    break;
+                case 'platonic':
+                    data = generatePlatonicSolid(n);
+                    name = `Platonic Solid (${n} vertices)`;
+                    break;
+                default:
+                    data = generatePrism(n);
+                    name = `${n}-gonal Prism`;
+            }
+            
+            if (!data) return;
+            
+            // Scale vertices to fit nicely in sphere
+            const scale = 1.4;
+            vertices = data.vertices.map(v => new THREE.Vector3(v[0] * scale, v[1] * scale, v[2] * scale));
+            
+            // Create polyhedron geometry
+            const geometry = new THREE.BufferGeometry();
+            const verticesArray = [];
+            const indices = [];
+            
+            data.faces.forEach(face => {
+                if (face.length === 3) {
+                    indices.push(face[0], face[1], face[2]);
+                } else if (face.length === 4) {
+                    indices.push(face[0], face[1], face[2]);
+                    indices.push(face[0], face[2], face[3]);
+                } else if (face.length >= 5) {
+                    // Fan triangulation for polygons
+                    for (let i = 1; i < face.length - 1; i++) {
+                        indices.push(face[0], face[i], face[i + 1]);
+                    }
+                }
+            });
+            
+            vertices.forEach(v => {
+                verticesArray.push(v.x, v.y, v.z);
+            });
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(verticesArray, 3));
+            geometry.setIndex(indices);
+            geometry.computeVertexNormals();
+            
+            const material = new THREE.MeshPhongMaterial({
+                color: 0xff6b35,
+                transparent: true,
+                opacity: 0.7,
+                side: THREE.DoubleSide,
+                wireframe: false
+            });
+            
+            polyhedron = new THREE.Mesh(geometry, material);
+            scene.add(polyhedron);
+            
+            // Create wireframe
+            const wireframeGeometry = new THREE.WireframeGeometry(geometry);
+            const wireframeMaterial = new THREE.LineBasicMaterial({
+                color: 0xffffff,
+                linewidth: 2
+            });
+            const wireframe = new THREE.LineSegments(wireframeGeometry, wireframeMaterial);
+            scene.add(wireframe);
+            edges.push(wireframe);
+            
+            // Create vertex markers on sphere surface
+            vertices.forEach((vertex, index) => {
+                // Project vertex onto sphere surface
+                const direction = vertex.clone().normalize();
+                const spherePoint = direction.multiplyScalar(sphereRadius);
+                
+                // Create prominent vertex marker
+                const markerGeometry = new THREE.SphereGeometry(0.08, 16, 16);
+                const markerMaterial = new THREE.MeshPhongMaterial({
+                    color: 0xff0000,
+                    emissive: 0x330000
+                });
+                const marker = new THREE.Mesh(markerGeometry, markerMaterial);
+                marker.position.copy(spherePoint);
+                
+                scene.add(marker);
+                vertexMarkers.push(marker);
+                
+                // Add text label for vertex index
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = 64;
+                canvas.height = 64;
+                context.fillStyle = 'white';
+                context.font = 'bold 48px Arial';
+                context.textAlign = 'center';
+                context.fillText((index + 1).toString(), 32, 40);
+                
+                const texture = new THREE.CanvasTexture(canvas);
+                const spriteMaterial = new THREE.SpriteMaterial({
+                    map: texture,
+                    transparent: true
+                });
+                const sprite = new THREE.Sprite(spriteMaterial);
+                sprite.position.copy(spherePoint.clone().multiplyScalar(1.1));
+                sprite.scale.set(0.3, 0.3, 1);
+                
+                scene.add(sprite);
+                vertexMarkers.push(sprite);
+            });
+            
+            // Update info display
+            const info = data.info;
+            document.getElementById('polyhedron-info').innerHTML = `
+                <strong>${name}</strong><br>
+                Base sides: ${n}<br>
+                Total vertices: ${info.vertices}<br>
+                Edges: ${info.edges}<br>
+                Faces: ${info.faces}
+            `;
+        }
+        
+        // Mouse controls for rotation
+        let isDragging = false;
+        let previousMousePosition = { x: 0, y: 0 };
+        
+        renderer.domElement.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            previousMousePosition = { x: e.clientX, y: e.clientY };
+        });
+        
+        renderer.domElement.addEventListener('mousemove', (e) => {
+            if (isDragging) {
+                const deltaMove = {
+                    x: e.clientX - previousMousePosition.x,
+                    y: e.clientY - previousMousePosition.y
+                };
+                
+                const deltaRotationQuaternion = new THREE.Quaternion()
+                    .setFromEuler(new THREE.Euler(
+                        toRadians(deltaMove.y * 0.5),
+                        toRadians(deltaMove.x * 0.5),
+                        0,
+                        'XYZ'
+                    ));
+                
+                // Rotate all objects together
+                sphere.quaternion.multiplyQuaternions(deltaRotationQuaternion, sphere.quaternion);
+                if (polyhedron) {
+                    polyhedron.quaternion.multiplyQuaternions(deltaRotationQuaternion, polyhedron.quaternion);
+                }
+                vertexMarkers.forEach(marker => {
+                    marker.quaternion.multiplyQuaternions(deltaRotationQuaternion, marker.quaternion);
+                });
+                edges.forEach(edge => {
+                    edge.quaternion.multiplyQuaternions(deltaRotationQuaternion, edge.quaternion);
+                });
+                
+                previousMousePosition = { x: e.clientX, y: e.clientY };
+            }
+        });
+        
+        renderer.domElement.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
+        
+        // Touch controls for mobile
+        renderer.domElement.addEventListener('touchstart', (e) => {
+            if (e.touches.length === 1) {
+                isDragging = true;
+                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        });
+        
+        renderer.domElement.addEventListener('touchmove', (e) => {
+            if (isDragging && e.touches.length === 1) {
+                e.preventDefault();
+                const deltaMove = {
+                    x: e.touches[0].clientX - previousMousePosition.x,
+                    y: e.touches[0].clientY - previousMousePosition.y
+                };
+                
+                const deltaRotationQuaternion = new THREE.Quaternion()
+                    .setFromEuler(new THREE.Euler(
+                        toRadians(deltaMove.y * 0.5),
+                        toRadians(deltaMove.x * 0.5),
+                        0,
+                        'XYZ'
+                    ));
+                
+                sphere.quaternion.multiplyQuaternions(deltaRotationQuaternion, sphere.quaternion);
+                if (polyhedron) {
+                    polyhedron.quaternion.multiplyQuaternions(deltaRotationQuaternion, polyhedron.quaternion);
+                }
+                vertexMarkers.forEach(marker => {
+                    marker.quaternion.multiplyQuaternions(deltaRotationQuaternion, marker.quaternion);
+                });
+                edges.forEach(edge => {
+                    edge.quaternion.multiplyQuaternions(deltaRotationQuaternion, edge.quaternion);
+                });
+                
+                previousMousePosition = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            }
+        });
+        
+        renderer.domElement.addEventListener('touchend', () => {
+            isDragging = false;
+        });
+        
+        // Utility function
+        function toRadians(angle) {
+            return angle * (Math.PI / 180);
+        }
+        
+        // Zoom controls
+        let zoomLevel = 6;
+        camera.position.z = zoomLevel;
+        
+        document.getElementById('zoom-in').addEventListener('click', () => {
+            zoomLevel = Math.max(3, zoomLevel - 0.5);
+            camera.position.z = zoomLevel;
+        });
+        
+        document.getElementById('zoom-out').addEventListener('click', () => {
+            zoomLevel = Math.min(15, zoomLevel + 0.5);
+            camera.position.z = zoomLevel;
+        });
+        
+        // Controls
+        const typeSelect = document.getElementById('type-select');
+        const nSlider = document.getElementById('n-slider');
+        const nInput = document.getElementById('n-input');
+        
+        function updatePolyhedron() {
+            const type = typeSelect.value;
+            const n = parseInt(nSlider.value);
+            nInput.value = n;
+            createPolyhedron(type, n);
+        }
+        
+        typeSelect.addEventListener('change', updatePolyhedron);
+        nSlider.addEventListener('input', updatePolyhedron);
+        nInput.addEventListener('input', (e) => {
+            const value = Math.max(3, Math.min(50, parseInt(e.target.value) || 3));
+            nSlider.value = Math.min(20, value);
+            updatePolyhedron();
+        });
+        
+        // Window resize handler
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+        
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            // Gentle automatic rotation when not dragging
+            if (!isDragging) {
+                const rotationSpeed = 0.003;
+                sphere.rotation.y += rotationSpeed;
+                if (polyhedron) {
+                    polyhedron.rotation.y += rotationSpeed;
+                }
+                vertexMarkers.forEach(marker => {
+                    marker.rotation.y += rotationSpeed;
+                });
+                edges.forEach(edge => {
+                    edge.rotation.y += rotationSpeed;
+                });
+            }
+            
+            renderer.render(scene, camera);
+        }
+        
+        // Initialize
+        updatePolyhedron();
+        animate();
+    </script>
+</body>
+</html>
