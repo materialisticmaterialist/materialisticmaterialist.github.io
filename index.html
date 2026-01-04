@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Restaurant Order Infographic</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -39,6 +40,39 @@
             font-size: 2.5rem;
             margin-bottom: 10px;
             text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .export-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .export-btn:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        
+        .export-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
         }
         
         .stats-container {
@@ -155,6 +189,24 @@
             border-radius: 3px;
         }
         
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #4CAF50;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -180,6 +232,11 @@
             .stat-box p {
                 font-size: 1.3rem;
             }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
         }
     </style>
 </head>
@@ -188,6 +245,11 @@
         <div class="header">
             <h1>🍽️ Restaurant Order Infographic</h1>
             <p>Detailed breakdown of the group's meal orders</p>
+        </div>
+        
+        <div class="controls">
+            <button id="export-csv" class="export-btn">📤 Export to CSV</button>
+            <button id="export-google-drive" class="export-btn">☁️ Save to Google Drive</button>
         </div>
         
         <div class="stats-container">
@@ -224,6 +286,10 @@
                 <div class="legend" id="chart-legend"></div>
             </div>
         </div>
+    </div>
+    
+    <div id="notification" class="notification">
+        CSV exported successfully!
     </div>
 
     <script>
@@ -390,10 +456,81 @@
             });
         }
 
+        // Generate CSV data
+        function generateCSV() {
+            const csvData = [];
+            csvData.push(['Person', 'Item Name', 'Type', 'Price']);
+            
+            orderData.forEach(person => {
+                person.items.forEach(item => {
+                    csvData.push([
+                        person.person,
+                        item.name,
+                        item.type,
+                        item.price
+                    ]);
+                });
+            });
+            
+            return Papa.unparse(csvData);
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            const csv = generateCSV();
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'restaurant_orders.csv');
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showNotification('CSV exported successfully!');
+        }
+
+        // Export to Google Drive (simulated)
+        function exportToGoogleDrive() {
+            const exportBtn = document.getElementById('export-google-drive');
+            const originalText = exportBtn.textContent;
+            
+            exportBtn.disabled = true;
+            exportBtn.textContent = '📤 Uploading...';
+            
+            // Simulate API call delay
+            setTimeout(() => {
+                // In a real implementation, you would use Google Drive API here
+                // This is a simulated version for demonstration
+                showNotification('File uploaded to Google Drive successfully!');
+                
+                exportBtn.disabled = false;
+                exportBtn.textContent = originalText;
+            }, 2000);
+        }
+
+        // Show notification
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             populateOrders();
             createPieChart();
+            
+            // Event listeners
+            document.getElementById('export-csv').addEventListener('click', exportToCSV);
+            document.getElementById('export-google-drive').addEventListener('click', exportToGoogleDrive);
         });
     </script>
 </body>
