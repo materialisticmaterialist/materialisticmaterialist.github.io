@@ -7,6 +7,38 @@
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        :root {
+            --bg-primary: #f5f7fa;
+            --bg-secondary: #ffffff;
+            --text-primary: #333333;
+            --text-secondary: #7f8c8d;
+            --accent-primary: #3498db;
+            --accent-secondary: #2c3e50;
+            --card-bg: #ffffff;
+            --shadow: rgba(0,0,0,0.1);
+            --border: #eee;
+            --success: #27ae60;
+            --warning: #ffa726;
+            --danger: #e74c3c;
+            --info: #9b59b6;
+        }
+
+        .dark-mode {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --text-primary: #eeeeee;
+            --text-secondary: #bbbbbb;
+            --accent-primary: #4cc9f0;
+            --accent-secondary: #f8f9fa;
+            --card-bg: #16213e;
+            --shadow: rgba(0,0,0,0.3);
+            --border: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --info: #9b59b6;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -15,10 +47,11 @@
         }
         
         body {
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-            color: #333;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 100%);
+            color: var(--text-primary);
             min-height: 100vh;
             padding: 20px;
+            transition: background-color 0.3s ease, color 0.3s ease;
         }
         
         .container {
@@ -30,18 +63,46 @@
             text-align: center;
             padding: 20px 0;
             margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .header-content {
+            flex: 1;
         }
         
         h1 {
-            color: #2c3e50;
+            color: var(--accent-primary);
             font-size: 2.8rem;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+            text-shadow: 2px 2px 4px var(--shadow);
         }
         
         .subtitle {
-            color: #7f8c8d;
+            color: var(--text-secondary);
             font-size: 1.2rem;
+        }
+        
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 2px solid var(--accent-primary);
+            color: var(--accent-primary);
+            padding: 12px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .theme-toggle:hover {
+            background: var(--accent-primary);
+            color: white;
         }
         
         .dashboard {
@@ -58,20 +119,21 @@
         }
         
         .card {
-            background: white;
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            transition: transform 0.3s ease;
+            box-shadow: 0 10px 30px var(--shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         
         .card:hover {
             transform: translateY(-5px);
+            box-shadow: 0 15px 40px var(--shadow);
         }
         
         .card-title {
             font-size: 1.4rem;
-            color: #3498db;
+            color: var(--accent-primary);
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -87,25 +149,25 @@
         .stat-item {
             text-align: center;
             padding: 15px;
-            background: #f8f9fa;
+            background: rgba(52, 152, 219, 0.1);
             border-radius: 10px;
             transition: all 0.3s ease;
         }
         
         .stat-item:hover {
-            background: #e3f2fd;
+            background: rgba(52, 152, 219, 0.2);
             transform: scale(1.05);
         }
         
         .stat-value {
             font-size: 2rem;
             font-weight: bold;
-            color: #e74c3c;
+            color: var(--danger);
         }
         
         .stat-label {
             font-size: 0.9rem;
-            color: #7f8c8d;
+            color: var(--text-secondary);
             margin-top: 5px;
         }
         
@@ -123,17 +185,19 @@
         }
         
         .bill-details {
-            background: white;
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px var(--shadow);
+            max-height: 600px;
+            overflow-y: auto;
         }
         
         .bill-item {
             display: flex;
             justify-content: space-between;
             padding: 12px 0;
-            border-bottom: 1px solid #eee;
+            border-bottom: 1px solid var(--border);
         }
         
         .bill-item:last-child {
@@ -146,7 +210,7 @@
         
         .item-price {
             font-weight: bold;
-            color: #27ae60;
+            color: var(--success);
         }
         
         .total-row {
@@ -154,7 +218,7 @@
             font-weight: bold;
             margin-top: 10px;
             padding-top: 15px;
-            border-top: 2px solid #3498db;
+            border-top: 2px solid var(--accent-primary);
         }
         
         .visualization {
@@ -170,10 +234,10 @@
         }
         
         .chart-container {
-            background: white;
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px var(--shadow);
             text-align: center;
         }
         
@@ -198,10 +262,10 @@
         }
         
         .houses-section {
-            background: white;
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px var(--shadow);
             margin-bottom: 30px;
         }
         
@@ -213,15 +277,15 @@
         }
         
         .house {
-            border: 2px solid #3498db;
+            border: 2px solid var(--accent-primary);
             border-radius: 10px;
             padding: 15px;
-            background: #f8f9fa;
+            background: rgba(52, 152, 219, 0.05);
         }
         
         .house-title {
             font-weight: bold;
-            color: #2c3e50;
+            color: var(--accent-secondary);
             margin-bottom: 10px;
             display: flex;
             align-items: center;
@@ -232,10 +296,11 @@
             display: flex;
             flex-wrap: wrap;
             gap: 8px;
+            margin-bottom: 15px;
         }
         
         .member {
-            background: #3498db;
+            background: var(--accent-primary);
             color: white;
             padding: 5px 10px;
             border-radius: 15px;
@@ -246,36 +311,45 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
             gap: 15px;
-            margin-top: 20px;
+            margin-top: 10px;
         }
         
         .item-icon {
             text-align: center;
             padding: 15px;
             border-radius: 10px;
-            background: #f8f9fa;
+            background: rgba(255, 255, 255, 0.1);
             transition: all 0.3s ease;
             cursor: pointer;
         }
         
+        .dark-mode .item-icon {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
         .item-icon:hover {
             transform: scale(1.05);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 5px 15px var(--shadow);
         }
         
         .item-icon.entree {
-            background: #e3f2fd;
-            border: 2px solid #3498db;
+            background: rgba(52, 152, 219, 0.1);
+            border: 2px solid var(--accent-primary);
         }
         
         .item-icon.drink {
-            background: #fff3e0;
-            border: 2px solid #ffa726;
+            background: rgba(255, 167, 38, 0.1);
+            border: 2px solid var(--warning);
         }
         
         .icon {
             font-size: 2rem;
             margin-bottom: 10px;
+            color: var(--accent-primary);
+        }
+        
+        .item-icon.drink .icon {
+            color: var(--warning);
         }
         
         .item-name-small {
@@ -286,15 +360,15 @@
         .item-price-small {
             font-size: 0.9rem;
             font-weight: bold;
-            color: #27ae60;
+            color: var(--success);
             margin-top: 5px;
         }
         
         .resources-section {
-            background: white;
+            background: var(--card-bg);
             border-radius: 15px;
             padding: 25px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 30px var(--shadow);
             margin-bottom: 30px;
         }
         
@@ -306,22 +380,22 @@
         }
         
         .resource-card {
-            border: 2px solid #27ae60;
+            border: 2px solid var(--success);
             border-radius: 10px;
             padding: 20px;
             text-align: center;
-            background: #f8fff8;
+            background: rgba(39, 174, 96, 0.05);
             transition: all 0.3s ease;
         }
         
         .resource-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            box-shadow: 0 10px 20px var(--shadow);
         }
         
         .resource-icon {
             font-size: 3rem;
-            color: #27ae60;
+            color: var(--success);
             margin-bottom: 15px;
         }
         
@@ -329,17 +403,17 @@
             font-weight: bold;
             font-size: 1.2rem;
             margin-bottom: 10px;
-            color: #2c3e50;
+            color: var(--accent-secondary);
         }
         
         .resource-description {
-            color: #7f8c8d;
+            color: var(--text-secondary);
             font-size: 0.9rem;
             margin-bottom: 15px;
         }
         
         .btn {
-            background: #27ae60;
+            background: var(--success);
             color: white;
             border: none;
             padding: 10px 20px;
@@ -367,21 +441,45 @@
         footer {
             text-align: center;
             padding: 20px;
-            color: #7f8c8d;
+            color: var(--text-secondary);
             font-size: 0.9rem;
         }
         
         .couple-highlight {
-            background: linear-gradient(45deg, #ffeaa7, #fab1a0);
-            border-left: 4px solid #e17055;
+            background: linear-gradient(45deg, rgba(255, 234, 167, 0.3), rgba(250, 177, 160, 0.3));
+            border-left: 4px solid var(--danger);
+        }
+        
+        /* Scrollbar styling */
+        .bill-details::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .bill-details::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+        
+        .bill-details::-webkit-scrollbar-thumb {
+            background: var(--accent-primary);
+            border-radius: 4px;
+        }
+        
+        .bill-details::-webkit-scrollbar-thumb:hover {
+            background: #2980b9;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <header>
-            <h1><i class="fas fa-receipt"></i> Group Dinner Bill Visualization</h1>
-            <p class="subtitle">Detailed breakdown with interactive elements and house assignments</p>
+            <div class="header-content">
+                <h1><i class="fas fa-receipt"></i> Group Dinner Bill Visualization</h1>
+                <p class="subtitle">Detailed breakdown with interactive elements and house assignments</p>
+            </div>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i> Dark Mode
+            </button>
         </header>
         
         <div class="dashboard">
@@ -521,11 +619,11 @@
                     <div id="item-distribution-chart"></div>
                     <div class="legend">
                         <div class="legend-item">
-                            <div class="legend-color" style="background-color: #3498db;"></div>
+                            <div class="legend-color" style="background-color: var(--accent-primary);"></div>
                             <span>Entrees</span>
                         </div>
                         <div class="legend-item">
-                            <div class="legend-color" style="background-color: #ffa726;"></div>
+                            <div class="legend-color" style="background-color: var(--warning);"></div>
                             <span>Drinks</span>
                         </div>
                     </div>
@@ -536,15 +634,15 @@
                     <div id="spending-distribution-chart"></div>
                     <div class="legend">
                         <div class="legend-item">
-                            <div class="legend-color" style="background-color: #e74c3c;"></div>
+                            <div class="legend-color" style="background-color: var(--danger);"></div>
                             <span>Hrishi & Sweena</span>
                         </div>
                         <div class="legend-item">
-                            <div class="legend-color" style="background-color: #9b59b6;"></div>
+                            <div class="legend-color" style="background-color: var(--info);"></div>
                             <span>Srini & Aishwarya</span>
                         </div>
                         <div class="legend-item">
-                            <div class="legend-color" style="background-color: #27ae60;"></div>
+                            <div class="legend-color" style="background-color: var(--success);"></div>
                             <span>Others</span>
                         </div>
                     </div>
@@ -611,13 +709,9 @@
                 </div>
                 
                 <div class="house">
-                    <div class="house-title"><i class="fas fa-users"></i> Others</div>
+                    <div class="house-title"><i class="fas fa-user"></i> Rutu</div>
                     <div class="house-members">
                         <div class="member">Rutu</div>
-                        <div class="member">Kannada Dude</div>
-                        <div class="member">KD's Wife</div>
-                        <div class="member">Tabrez</div>
-                        <div class="member">Monjusha</div>
                     </div>
                     <div class="items-grid">
                         <div class="item-icon entree">
@@ -627,23 +721,63 @@
                         </div>
                         <div class="item-icon drink">
                             <div class="icon"><i class="fas fa-wine-bottle"></i></div>
-                            <div class="item-name-small">Tropical Breeze</div>
+                            <div class="item-name-small">Tropical Breeze (x2)</div>
+                            <div class="item-price-small">$24.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="house">
+                    <div class="house-title"><i class="fas fa-user"></i> Tabrez & Manjusha</div>
+                    <div class="house-members">
+                        <div class="member">Tabrez</div>
+                        <div class="member">Manjusha</div>
+                    </div>
+                    <div class="items-grid">
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-fish"></i></div>
+                            <div class="item-name-small">Seafood Crepe</div>
+                            <div class="item-price-small">$28.00</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-glass-whiskey"></i></div>
+                            <div class="item-name-small">Pineapple Oasis</div>
+                            <div class="item-price-small">$7.00</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-mug-hot"></i></div>
+                            <div class="item-name-small">Latte</div>
+                            <div class="item-price-small">$6.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="house">
+                    <div class="house-title"><i class="fas fa-user"></i> KD & KD's Wife</div>
+                    <div class="house-members">
+                        <div class="member">KD</div>
+                        <div class="member">KD's Wife</div>
+                    </div>
+                    <div class="items-grid">
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-leaf"></i></div>
+                            <div class="item-name-small">Veggie Primavera</div>
+                            <div class="item-price-small">$20.50</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-mug-hot"></i></div>
+                            <div class="item-name-small">Vanilla Latte</div>
+                            <div class="item-price-small">$6.50</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-wine-bottle"></i></div>
+                            <div class="item-name-small">Raspberry Refresher</div>
                             <div class="item-price-small">$12.00</div>
                         </div>
                         <div class="item-icon entree">
                             <div class="icon"><i class="fas fa-egg"></i></div>
                             <div class="item-name-small">Burrito</div>
                             <div class="item-price-small">$19.50</div>
-                        </div>
-                        <div class="item-icon entree">
-                            <div class="icon"><i class="fas fa-leaf"></i></div>
-                            <div class="item-name-small">Primavera</div>
-                            <div class="item-price-small">$20.50</div>
-                        </div>
-                        <div class="item-icon entree">
-                            <div class="icon"><i class="fas fa-fish"></i></div>
-                            <div class="item-name-small">Seafood Crepe</div>
-                            <div class="item-price-small">$28.00</div>
                         </div>
                     </div>
                 </div>
@@ -695,8 +829,113 @@
     </div>
 
     <script>
-        // Create charts when page loads
+        // Enums for structured data
+        const PEOPLE = {
+            HRISHI: "Hrishi",
+            SWEENA: "Sweena",
+            SRINI: "Srini",
+            AISHWARYA: "Aishwarya",
+            RUTU: "Rutu",
+            TABREZ: "Tabrez",
+            MANJUSHA: "Manjusha",
+            KD: "KD",
+            KD_WIFE: "KD's Wife"
+        };
+
+        const DISHES = {
+            POUTINE: "El Camino Poutine",
+            BREAKFAST_SAMMY: "Breakfast Sammy",
+            VEGGIE_PRIMAVERA: "Veggie Primavera",
+            SEAFOOD_CREPE: "Canadian Lobster & Shrimp Crepe",
+            BURRITO: "Huevos In' Na Burrito",
+            SHAKSHUKA: "Shakshuka",
+            FRUIT_SUB: "No Potato sub Fruit"
+        };
+
+        const DRINKS = {
+            TROPICAL_BREEZE: "Tropical Breeze",
+            COLD_BREW: "Cold Brew Coffee",
+            LATTE: "Whole Milk Latte",
+            CARAMEL_LATTE: "Whole Milk Caramel Latte",
+            MATCHA_LATTE: "Whole Milk Matcha Latte",
+            VANILLA_LATTE: "Whole Milk Vanilla Latte",
+            RASPBERRY_REFRESHER: "Raspberry Refresher",
+            PINEAPPLE_OASIS: "Pineapple Oasis"
+        };
+
+        // House assignments based on enums
+        const HOUSES = [
+            {
+                name: "Hrishi & Sweena",
+                members: [PEOPLE.HRISHI, PEOPLE.SWEENA],
+                items: [
+                    { name: DISHES.BREAKFAST_SAMMY, type: "entree", price: 19.00 },
+                    { name: DRINKS.COLD_BREW, type: "drink", price: 5.00 },
+                    { name: DRINKS.LATTE, type: "drink", price: 6.00 }
+                ]
+            },
+            {
+                name: "Srini & Aishwarya",
+                members: [PEOPLE.SRINI, PEOPLE.AISHWARYA],
+                items: [
+                    { name: DISHES.BREAKFAST_SAMMY, type: "entree", price: 19.00 },
+                    { name: DRINKS.CARAMEL_LATTE, type: "drink", price: 6.50 },
+                    { name: DRINKS.MATCHA_LATTE, type: "drink", price: 6.50 },
+                    { name: DISHES.SHAKSHUKA, type: "entree", price: 19.75 }
+                ]
+            },
+            {
+                name: "Rutu",
+                members: [PEOPLE.RUTU],
+                items: [
+                    { name: DISHES.POUTINE, type: "entree", price: 23.50 },
+                    { name: `${DRINKS.TROPICAL_BREEZE} (x2)`, type: "drink", price: 24.00 }
+                ]
+            },
+            {
+                name: "Tabrez & Manjusha",
+                members: [PEOPLE.TABREZ, PEOPLE.MANJUSHA],
+                items: [
+                    { name: DISHES.SEAFOOD_CREPE, type: "entree", price: 28.00 },
+                    { name: DRINKS.PINEAPPLE_OASIS, type: "drink", price: 7.00 },
+                    { name: DRINKS.LATTE, type: "drink", price: 6.00 }
+                ]
+            },
+            {
+                name: "KD & KD's Wife",
+                members: [PEOPLE.KD, PEOPLE.KD_WIFE],
+                items: [
+                    { name: DISHES.VEGGIE_PRIMAVERA, type: "entree", price: 20.50 },
+                    { name: DRINKS.VANILLA_LATTE, type: "drink", price: 6.50 },
+                    { name: DRINKS.RASPBERRY_REFRESHER, type: "drink", price: 12.00 },
+                    { name: DISHES.BURRITO, type: "entree", price: 19.50 }
+                ]
+            }
+        ];
+
+        // Theme toggle functionality
         document.addEventListener('DOMContentLoaded', function() {
+            const themeToggle = document.getElementById('themeToggle');
+            
+            // Check for saved theme preference
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark') {
+                document.body.classList.add('dark-mode');
+                themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+            }
+            
+            themeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                
+                if (document.body.classList.contains('dark-mode')) {
+                    themeToggle.innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    themeToggle.innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+                    localStorage.setItem('theme', 'light');
+                }
+            });
+            
             createItemDistributionChart();
             createSpendingDistributionChart();
         });
@@ -715,8 +954,8 @@
             
             // Data for item distribution
             const data = [
-                { type: "Entrees", count: 7, color: "#3498db" },
-                { type: "Drinks", count: 11, color: "#ffa726" }
+                { type: "Entrees", count: 7, color: getComputedStyle(document.documentElement).getPropertyValue('--accent-primary') },
+                { type: "Drinks", count: 11, color: getComputedStyle(document.documentElement).getPropertyValue('--warning') }
             ];
             
             const pie = d3.pie()
@@ -735,8 +974,8 @@
             
             arcs.append("path")
                 .attr("d", arc)
-                .attr("fill", d => d.data.color)
-                .attr("stroke", "#fff")
+                .attr("fill", d => d.data.color.trim())
+                .attr("stroke", "var(--card-bg)")
                 .attr("stroke-width", 2);
             
             // Add labels
@@ -744,7 +983,7 @@
                 .attr("transform", d => `translate(${arc.centroid(d)})`)
                 .attr("text-anchor", "middle")
                 .attr("font-size", "12px")
-                .attr("fill", "white")
+                .attr("fill", "var(--card-bg)")
                 .attr("font-weight", "bold")
                 .text(d => `${d.data.count}`);
         }
@@ -763,9 +1002,9 @@
             
             // Spending data by house/couple
             const data = [
-                { group: "Hrishi & Sweena", amount: 30.00, color: "#e74c3c" },
-                { group: "Srini & Aishwarya", amount: 51.25, color: "#9b59b6" },
-                { group: "Others", amount: 153.50, color: "#27ae60" }
+                { group: "Hrishi & Sweena", amount: 30.00, color: getComputedStyle(document.documentElement).getPropertyValue('--danger') },
+                { group: "Srini & Aishwarya", amount: 51.25, color: getComputedStyle(document.documentElement).getPropertyValue('--info') },
+                { group: "Others", amount: 153.50, color: getComputedStyle(document.documentElement).getPropertyValue('--success') }
             ];
             
             const pie = d3.pie()
@@ -784,8 +1023,8 @@
             
             arcs.append("path")
                 .attr("d", arc)
-                .attr("fill", d => d.data.color)
-                .attr("stroke", "#fff")
+                .attr("fill", d => d.data.color.trim())
+                .attr("stroke", "var(--card-bg)")
                 .attr("stroke-width", 2);
             
             // Add labels
@@ -793,7 +1032,7 @@
                 .attr("transform", d => `translate(${arc.centroid(d)})`)
                 .attr("text-anchor", "middle")
                 .attr("font-size", "10px")
-                .attr("fill", "white")
+                .attr("fill", "var(--card-bg)")
                 .attr("font-weight", "bold")
                 .text(d => `$${d.data.amount.toFixed(0)}`);
         }
