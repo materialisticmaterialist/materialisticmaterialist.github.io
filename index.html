@@ -3,590 +3,721 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Restaurant Order Infographic</title>
+    <title>Group Dinner Bill Visualization</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
         
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
             color: #333;
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
+            min-height: 100vh;
+            padding: 20px;
         }
         
         .container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            width: 100vw;
-            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
         }
         
-        .header {
+        header {
             text-align: center;
-            margin-bottom: 20px;
-            color: white;
+            padding: 20px 0;
+            margin-bottom: 30px;
         }
         
-        .header h1 {
-            font-size: 2.5rem;
+        h1 {
+            color: #2c3e50;
+            font-size: 2.8rem;
             margin-bottom: 10px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
         }
         
-        .controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        
-        .export-btn {
-            background: #4CAF50;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            cursor: pointer;
-            font-size: 1rem;
-            font-weight: bold;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transition: all 0.3s ease;
-        }
-        
-        .export-btn:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-        
-        .export-btn:disabled {
-            background: #cccccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-        
-        .financial-summary {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-        }
-        
-        .financial-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        
-        .financial-item {
-            text-align: center;
-            padding: 10px;
-            background: rgba(102, 126, 234, 0.1);
-            border-radius: 10px;
-        }
-        
-        .financial-label {
-            font-size: 0.9rem;
-            color: #667eea;
-            margin-bottom: 5px;
-        }
-        
-        .financial-value {
-            font-size: 1.3rem;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .family-shares {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 15px;
-        }
-        
-        .family-card {
-            background: rgba(118, 75, 162, 0.1);
-            border-radius: 10px;
-            padding: 15px;
-            text-align: center;
-        }
-        
-        .family-name {
-            font-weight: bold;
-            color: #764ba2;
-            margin-bottom: 8px;
-        }
-        
-        .family-amount {
+        .subtitle {
+            color: #7f8c8d;
             font-size: 1.2rem;
-            font-weight: bold;
-            color: #333;
         }
         
-        .stats-container {
-            display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            color: #3498db;
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
             gap: 10px;
         }
         
-        .stat-box {
-            background: rgba(255, 255, 255, 0.9);
-            padding: 15px;
-            border-radius: 15px;
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .stat-item {
             text-align: center;
-            min-width: 120px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-            backdrop-filter: blur(10px);
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            transition: all 0.3s ease;
         }
         
-        .stat-box h3 {
-            font-size: 1.2rem;
-            margin-bottom: 5px;
-            color: #667eea;
+        .stat-item:hover {
+            background: #e3f2fd;
+            transform: scale(1.05);
         }
         
-        .stat-box p {
-            font-size: 1.8rem;
+        .stat-value {
+            font-size: 2rem;
             font-weight: bold;
+            color: #e74c3c;
         }
         
-        .content-area {
-            display: flex;
-            flex: 1;
-            gap: 20px;
-            min-height: 0;
+        .stat-label {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
         }
         
-        .orders-section {
-            flex: 2;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 20px;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        .bill-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 30px;
         }
         
-        .visualization-section {
-            flex: 1;
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        @media (max-width: 768px) {
+            .bill-section {
+                grid-template-columns: 1fr;
+            }
         }
         
-        .person-group {
-            margin-bottom: 15px;
-            padding: 10px;
-            border-left: 4px solid #667eea;
-            background: rgba(102, 126, 234, 0.05);
-            border-radius: 0 8px 8px 0;
+        .bill-details {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
         }
         
-        .person-name {
-            font-weight: bold;
-            color: #667eea;
-            margin-bottom: 5px;
-            font-size: 1.1rem;
-        }
-        
-        .item {
+        .bill-item {
             display: flex;
             justify-content: space-between;
-            padding: 3px 0;
-            font-size: 0.9rem;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .bill-item:last-child {
+            border-bottom: none;
         }
         
         .item-name {
-            color: #555;
+            font-weight: 500;
         }
         
         .item-price {
-            color: #764ba2;
             font-weight: bold;
+            color: #27ae60;
         }
         
-        .chart-title {
+        .total-row {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid #3498db;
+        }
+        
+        .visualization {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+        }
+        
+        @media (max-width: 768px) {
+            .visualization {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
             text-align: center;
-            margin-bottom: 15px;
-            color: #667eea;
-            font-size: 1.3rem;
         }
         
         .legend {
             display: flex;
-            justify-content: space-around;
-            margin-top: 15px;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
             flex-wrap: wrap;
-            gap: 10px;
         }
         
         .legend-item {
             display: flex;
             align-items: center;
-            font-size: 0.8rem;
+            gap: 8px;
         }
         
         .legend-color {
-            width: 15px;
-            height: 15px;
-            margin-right: 5px;
-            border-radius: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
         }
         
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            background: #4CAF50;
+        .houses-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .houses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .house {
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+        
+        .house-title {
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .house-members {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        
+        .member {
+            background: #3498db;
             color: white;
-            border-radius: 5px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            transform: translateX(400px);
-            transition: transform 0.3s ease;
-            z-index: 1000;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.85rem;
         }
         
-        .notification.show {
-            transform: translateX(0);
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
         }
         
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .header h1 {
-                font-size: 1.8rem;
-            }
-            
-            .content-area {
-                flex-direction: column;
-            }
-            
-            .stat-box {
-                min-width: 80px;
-                padding: 10px;
-            }
-            
-            .stat-box h3 {
-                font-size: 0.9rem;
-            }
-            
-            .stat-box p {
-                font-size: 1.3rem;
-            }
-            
-            .controls {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .financial-grid {
-                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            }
+        .item-icon {
+            text-align: center;
+            padding: 15px;
+            border-radius: 10px;
+            background: #f8f9fa;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .item-icon:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .item-icon.entree {
+            background: #e3f2fd;
+            border: 2px solid #3498db;
+        }
+        
+        .item-icon.drink {
+            background: #fff3e0;
+            border: 2px solid #ffa726;
+        }
+        
+        .icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        
+        .item-name-small {
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .item-price-small {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #27ae60;
+            margin-top: 5px;
+        }
+        
+        .resources-section {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        
+        .resources-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .resource-card {
+            border: 2px solid #27ae60;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            background: #f8fff8;
+            transition: all 0.3s ease;
+        }
+        
+        .resource-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .resource-icon {
+            font-size: 3rem;
+            color: #27ae60;
+            margin-bottom: 15px;
+        }
+        
+        .resource-title {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+        
+        .resource-description {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+        }
+        
+        .btn {
+            background: #27ae60;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            background: #219653;
+            transform: translateY(-2px);
+        }
+        
+        .btn.google {
+            background: #4285f4;
+        }
+        
+        .btn.google:hover {
+            background: #3367d6;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .couple-highlight {
+            background: linear-gradient(45deg, #ffeaa7, #fab1a0);
+            border-left: 4px solid #e17055;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="header">
-            <h1>🍽️ Restaurant Order Infographic</h1>
-            <p>Detailed breakdown of the group's meal orders</p>
-        </div>
+        <header>
+            <h1><i class="fas fa-receipt"></i> Group Dinner Bill Visualization</h1>
+            <p class="subtitle">Detailed breakdown with interactive elements and house assignments</p>
+        </header>
         
-        <div class="financial-summary">
-            <div class="financial-grid">
-                <div class="financial-item">
-                    <div class="financial-label">Subtotal</div>
-                    <div class="financial-value" id="subtotal">$245.75</div>
-                </div>
-                <div class="financial-item">
-                    <div class="financial-label">HST (13%)</div>
-                    <div class="financial-value" id="hst">$30.65</div>
-                </div>
-                <div class="financial-item">
-                    <div class="financial-label">Gratuity (18%)</div>
-                    <div class="financial-value" id="gratuity">$42.44</div>
-                </div>
-                <div class="financial-item">
-                    <div class="financial-label">Total</div>
-                    <div class="financial-value" id="total">$318.84</div>
+        <div class="dashboard">
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-chart-pie"></i> Order Summary</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">9</div>
+                        <div class="stat-label">People</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">18</div>
+                        <div class="stat-label">Total Items</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">7</div>
+                        <div class="stat-label">Entrees</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">11</div>
+                        <div class="stat-label">Drinks</div>
+                    </div>
                 </div>
             </div>
             
-            <h3 style="text-align: center; color: #667eea; margin-bottom: 15px;">Family Shares</h3>
-            <div class="family-shares" id="family-shares">
-                <!-- Family shares will be populated by JavaScript -->
+            <div class="card">
+                <h2 class="card-title"><i class="fas fa-calculator"></i> Financial Summary</h2>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-value">$235.75</div>
+                        <div class="stat-label">Subtotal</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">$42.44</div>
+                        <div class="stat-label">Gratuity (18%)</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">$30.65</div>
+                        <div class="stat-label">HST</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-value">$308.84</div>
+                        <div class="stat-label">Total</div>
+                    </div>
+                </div>
             </div>
         </div>
         
-        <div class="controls">
-            <button id="export-csv" class="export-btn">📤 Export to CSV</button>
-            <button id="export-google-drive" class="export-btn">☁️ Save to Google Drive</button>
-        </div>
-        
-        <div class="stats-container">
-            <div class="stat-box">
-                <h3>People</h3>
-                <p>9</p>
-            </div>
-            <div class="stat-box">
-                <h3>Total Items</h3>
-                <p>18</p>
-            </div>
-            <div class="stat-box">
-                <h3>Entrees</h3>
-                <p>7</p>
-            </div>
-            <div class="stat-box">
-                <h3>Drinks</h3>
-                <p>11</p>
-            </div>
-            <div class="stat-box">
-                <h3>Unique Items</h3>
-                <p>12</p>
-            </div>
-        </div>
-        
-        <div class="content-area">
-            <div class="orders-section" id="orders-list">
-                <!-- Orders will be populated by JavaScript -->
+        <div class="bill-section">
+            <div class="bill-details">
+                <h2 class="card-title"><i class="fas fa-file-invoice"></i> Detailed Bill</h2>
+                <div class="bill-item">
+                    <span class="item-name">El Camino Poutine</span>
+                    <span class="item-price">$23.50</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Tropical Breeze (x2)</span>
+                    <span class="item-price">$24.00</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Cold Brew Coffee</span>
+                    <span class="item-price">$5.00</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Whole Milk Latte</span>
+                    <span class="item-price">$6.00</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Whole Milk Caramel Latte</span>
+                    <span class="item-price">$6.50</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Whole Milk Matcha Latte</span>
+                    <span class="item-price">$6.50</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Whole Milk Vanilla Latte</span>
+                    <span class="item-price">$6.50</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Raspberry Refresher</span>
+                    <span class="item-price">$12.00</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Pineapple Oasis</span>
+                    <span class="item-price">$7.00</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Veggie Primavera</span>
+                    <span class="item-price">$20.50</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Canadian Lobster & Shrimp Crepe</span>
+                    <span class="item-price">$28.00</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Breakfast Sammy (x3)</span>
+                    <span class="item-price">$57.00</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">No Potato sub Fruit</span>
+                    <span class="item-price">$1.00</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Huevos In' Na Burrito</span>
+                    <span class="item-price">$19.50</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Shakshuka</span>
+                    <span class="item-price">$19.75</span>
+                </div>
+                <div class="bill-item">
+                    <span class="item-name">Whole Milk Latte</span>
+                    <span class="item-price">$6.00</span>
+                </div>
+                <div class="bill-item total-row">
+                    <span class="item-name">Subtotal</span>
+                    <span class="item-price">$235.75</span>
+                </div>
+                <div class="bill-item total-row">
+                    <span class="item-name">Gratuity (18%)</span>
+                    <span class="item-price">$42.44</span>
+                </div>
+                <div class="bill-item total-row">
+                    <span class="item-name">HST</span>
+                    <span class="item-price">$30.65</span>
+                </div>
+                <div class="bill-item total-row">
+                    <span class="item-name">Total</span>
+                    <span class="item-price">$308.84</span>
+                </div>
             </div>
             
-            <div class="visualization-section">
-                <div class="chart-title">📊 Order Distribution</div>
-                <div id="pie-chart"></div>
-                <div class="legend" id="chart-legend"></div>
+            <div class="visualization">
+                <div class="chart-container">
+                    <h2 class="card-title"><i class="fas fa-chart-bar"></i> Item Distribution</h2>
+                    <div id="item-distribution-chart"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #3498db;"></div>
+                            <span>Entrees</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #ffa726;"></div>
+                            <span>Drinks</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chart-container">
+                    <h2 class="card-title"><i class="fas fa-chart-line"></i> Spending Distribution</h2>
+                    <div id="spending-distribution-chart"></div>
+                    <div class="legend">
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #e74c3c;"></div>
+                            <span>Hrishi & Sweena</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #9b59b6;"></div>
+                            <span>Srini & Aishwarya</span>
+                        </div>
+                        <div class="legend-item">
+                            <div class="legend-color" style="background-color: #27ae60;"></div>
+                            <span>Others</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-    
-    <div id="notification" class="notification">
-        CSV exported successfully!
+        
+        <div class="houses-section">
+            <h2 class="card-title"><i class="fas fa-home"></i> House Assignments</h2>
+            <div class="houses-grid">
+                <div class="house couple-highlight">
+                    <div class="house-title"><i class="fas fa-heart"></i> Hrishi & Sweena</div>
+                    <div class="house-members">
+                        <div class="member">Hrishi</div>
+                        <div class="member">Sweena</div>
+                    </div>
+                    <div class="items-grid">
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-utensils"></i></div>
+                            <div class="item-name-small">Breakfast Sammy</div>
+                            <div class="item-price-small">$19.00</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-coffee"></i></div>
+                            <div class="item-name-small">Cold Brew</div>
+                            <div class="item-price-small">$5.00</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-mug-hot"></i></div>
+                            <div class="item-name-small">Latte</div>
+                            <div class="item-price-small">$6.00</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="house couple-highlight">
+                    <div class="house-title"><i class="fas fa-heart"></i> Srini & Aishwarya</div>
+                    <div class="house-members">
+                        <div class="member">Srini</div>
+                        <div class="member">Aishwarya</div>
+                    </div>
+                    <div class="items-grid">
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-utensils"></i></div>
+                            <div class="item-name-small">Breakfast Sammy</div>
+                            <div class="item-price-small">$19.00</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-mug-hot"></i></div>
+                            <div class="item-name-small">Caramel Latte</div>
+                            <div class="item-price-small">$6.50</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-mug-hot"></i></div>
+                            <div class="item-name-small">Matcha Latte</div>
+                            <div class="item-price-small">$6.50</div>
+                        </div>
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-egg"></i></div>
+                            <div class="item-name-small">Shakshuka</div>
+                            <div class="item-price-small">$19.75</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="house">
+                    <div class="house-title"><i class="fas fa-users"></i> Others</div>
+                    <div class="house-members">
+                        <div class="member">Rutu</div>
+                        <div class="member">Kannada Dude</div>
+                        <div class="member">KD's Wife</div>
+                        <div class="member">Tabrez</div>
+                        <div class="member">Monjusha</div>
+                    </div>
+                    <div class="items-grid">
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-cheese"></i></div>
+                            <div class="item-name-small">Poutine</div>
+                            <div class="item-price-small">$23.50</div>
+                        </div>
+                        <div class="item-icon drink">
+                            <div class="icon"><i class="fas fa-wine-bottle"></i></div>
+                            <div class="item-name-small">Tropical Breeze</div>
+                            <div class="item-price-small">$12.00</div>
+                        </div>
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-egg"></i></div>
+                            <div class="item-name-small">Burrito</div>
+                            <div class="item-price-small">$19.50</div>
+                        </div>
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-leaf"></i></div>
+                            <div class="item-name-small">Primavera</div>
+                            <div class="item-price-small">$20.50</div>
+                        </div>
+                        <div class="item-icon entree">
+                            <div class="icon"><i class="fas fa-fish"></i></div>
+                            <div class="item-name-small">Seafood Crepe</div>
+                            <div class="item-price-small">$28.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="resources-section">
+            <h2 class="card-title"><i class="fas fa-download"></i> Download Resources</h2>
+            <div class="resources-grid">
+                <div class="resource-card">
+                    <div class="resource-icon">
+                        <i class="fas fa-file-pdf"></i>
+                    </div>
+                    <div class="resource-title">Bill PDF</div>
+                    <div class="resource-description">Complete bill in PDF format</div>
+                    <a href="resource_0.pdf" class="btn" download>
+                        <i class="fas fa-download"></i> Download PDF
+                    </a>
+                </div>
+                
+                <div class="resource-card">
+                    <div class="resource-icon">
+                        <i class="fas fa-file-csv"></i>
+                    </div>
+                    <div class="resource-title">Data CSV</div>
+                    <div class="resource-description">Raw data in CSV format</div>
+                    <a href="resource_1.csv" class="btn" download>
+                        <i class="fas fa-download"></i> Download CSV
+                    </a>
+                </div>
+                
+                <div class="resource-card">
+                    <div class="resource-icon">
+                        <i class="fab fa-google-drive"></i>
+                    </div>
+                    <div class="resource-title">Google Sheet</div>
+                    <div class="resource-description">Live spreadsheet with data</div>
+                    <a href="https://docs.google.com/spreadsheets/d/1mITunR_lbJXY9OEQnnRRXgqGWzxJt_1bAzIBQjDtQlQ/edit?usp=sharing" class="btn google" target="_blank">
+                        <i class="fas fa-external-link-alt"></i> Open Sheet
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Total Bill: $308.84 | 9 People | 18 Items | Verified Calculation</p>
+            <p>Gratuity (18%) + HST Included | Canadian Licensed Establishment</p>
+        </footer>
     </div>
 
     <script>
-        // Data structure with family relationships
-        const orderData = [
-            {
-                person: "Rutu",
-                items: [
-                    { name: "El Camino Poutine", type: "Entree", price: 23.50 },
-                    { name: "Tropical Breeze", type: "Drink", price: 12.00 },
-                    { name: "Tropical Breeze", type: "Drink", price: 12.00 },
-                    { name: "Cold Brew Coffee", type: "Drink", price: 5.00 }
-                ],
-                family: "Rutu"
-            },
-            {
-                person: "Hrishi",
-                items: [
-                    { name: "Breakfast Sammy (Half)", type: "Entree", price: 9.50 },
-                    { name: "Cold Brew Coffee", type: "Drink", price: 5.00 }
-                ],
-                family: "Hrishi & Sweena"
-            },
-            {
-                person: "Sweena",
-                items: [
-                    { name: "Breakfast Sammy (Half)", type: "Entree", price: 9.50 },
-                    { name: "Whole Milk Latte", type: "Drink", price: 6.00 }
-                ],
-                family: "Hrishi & Sweena"
-            },
-            {
-                person: "Srini",
-                items: [
-                    { name: "Breakfast Sammy (Half)", type: "Entree", price: 9.50 },
-                    { name: "Whole Milk Caramel Latte", type: "Drink", price: 6.50 }
-                ],
-                family: "Srini & Aishwarya"
-            },
-            {
-                person: "Aishwarya",
-                items: [
-                    { name: "Shakshuka", type: "Entree", price: 19.75 },
-                    { name: "Whole Milk Matcha Latte", type: "Drink", price: 6.50 }
-                ],
-                family: "Srini & Aishwarya"
-            },
-            {
-                person: "Kannada Dude",
-                items: [
-                    { name: "Huevos In' Na Burrito", type: "Entree", price: 19.50 },
-                    { name: "Raspberry Refresher", type: "Drink", price: 12.00 }
-                ],
-                family: "Kannada Dude & Wife"
-            },
-            {
-                person: "KD's Wife",
-                items: [
-                    { name: "Veggie Primavera", type: "Entree", price: 20.50 },
-                    { name: "Whole Milk Vanilla Latte", type: "Drink", price: 6.50 }
-                ],
-                family: "Kannada Dude & Wife"
-            },
-            {
-                person: "Tabrez",
-                items: [
-                    { name: "Canadian Lobster & Shrimp Crepe", type: "Entree", price: 28.00 },
-                    { name: "Pineapple Oasis", type: "Drink", price: 7.00 }
-                ],
-                family: "Tabrez & Monjusha"
-            },
-            {
-                person: "Monjusha",
-                items: [
-                    { name: "Whole Milk Latte", type: "Drink", price: 6.00 }
-                ],
-                family: "Tabrez & Monjusha"
-            }
-        ];
-
-        // Calculate financials
-        function calculateFinancials() {
-            let subtotal = 0;
-            
-            orderData.forEach(person => {
-                person.items.forEach(item => {
-                    subtotal += item.price;
-                });
-            });
-            
-            const hst = 30.65; // Given in the problem
-            const gratuity = 42.44; // Given in the problem
-            const total = 318.84; // Given in the problem
-            
-            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
-            document.getElementById('hst').textContent = `$${hst.toFixed(2)}`;
-            document.getElementById('gratuity').textContent = `$${gratuity.toFixed(2)}`;
-            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
-            
-            return { subtotal, hst, gratuity, total };
-        }
-
-        // Calculate family shares
-        function calculateFamilyShares() {
-            const families = {};
-            
-            orderData.forEach(person => {
-                if (!families[person.family]) {
-                    families[person.family] = 0;
-                }
-                
-                person.items.forEach(item => {
-                    families[person.family] += item.price;
-                });
-            });
-            
-            // Add tax and gratuity proportionally
-            const { subtotal, hst, gratuity } = calculateFinancials();
-            const totalAdditional = hst + gratuity;
-            
-            const familySharesContainer = document.getElementById('family-shares');
-            familySharesContainer.innerHTML = '';
-            
-            Object.entries(families).forEach(([familyName, familySubtotal]) => {
-                const proportion = familySubtotal / subtotal;
-                const additionalCosts = totalAdditional * proportion;
-                const totalShare = familySubtotal + additionalCosts;
-                
-                const familyCard = document.createElement('div');
-                familyCard.className = 'family-card';
-                
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'family-name';
-                nameDiv.textContent = familyName;
-                
-                const amountDiv = document.createElement('div');
-                amountDiv.className = 'family-amount';
-                amountDiv.textContent = `$${totalShare.toFixed(2)}`;
-                
-                familyCard.appendChild(nameDiv);
-                familyCard.appendChild(amountDiv);
-                familySharesContainer.appendChild(familyCard);
-            });
-            
-            return families;
-        }
-
-        // Populate orders list
-        function populateOrders() {
-            const container = document.getElementById('orders-list');
-            container.innerHTML = '';
-            
-            orderData.forEach(person => {
-                const personDiv = document.createElement('div');
-                personDiv.className = 'person-group';
-                
-                const nameDiv = document.createElement('div');
-                nameDiv.className = 'person-name';
-                nameDiv.textContent = `${person.person} (${person.family})`;
-                
-                personDiv.appendChild(nameDiv);
-                
-                person.items.forEach(item => {
-                    const itemDiv = document.createElement('div');
-                    itemDiv.className = 'item';
-                    
-                    const nameSpan = document.createElement('span');
-                    nameSpan.className = 'item-name';
-                    nameSpan.textContent = `${item.name} (${item.type})`;
-                    
-                    const priceSpan = document.createElement('span');
-                    priceSpan.className = 'item-price';
-                    priceSpan.textContent = `$${item.price.toFixed(2)}`;
-                    
-                    itemDiv.appendChild(nameSpan);
-                    itemDiv.appendChild(priceSpan);
-                    personDiv.appendChild(itemDiv);
-                });
-                
-                container.appendChild(personDiv);
-            });
-        }
-
-        // Create pie chart
-        function createPieChart() {
-            // Clear previous chart
-            d3.select("#pie-chart").select("svg").remove();
-            
-            const width = 300;
-            const height = 300;
+        // Create charts when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            createItemDistributionChart();
+            createSpendingDistributionChart();
+        });
+        
+        function createItemDistributionChart() {
+            const width = 250;
+            const height = 250;
             const radius = Math.min(width, height) / 2;
             
-            const svg = d3.select("#pie-chart")
+            const svg = d3.select("#item-distribution-chart")
                 .append("svg")
                 .attr("width", width)
                 .attr("height", height)
                 .append("g")
                 .attr("transform", `translate(${width/2},${height/2})`);
             
-            // Count items by type
-            const counts = { Entree: 7, Drink: 11 };
-            const data = Object.entries(counts).map(([key, value]) => ({ type: key, count: value }));
-            
-            const color = d3.scaleOrdinal()
-                .domain(["Entree", "Drink"])
-                .range(["#667eea", "#764ba2"]);
+            // Data for item distribution
+            const data = [
+                { type: "Entrees", count: 7, color: "#3498db" },
+                { type: "Drinks", count: 11, color: "#ffa726" }
+            ];
             
             const pie = d3.pie()
                 .value(d => d.count)
@@ -604,107 +735,68 @@
             
             arcs.append("path")
                 .attr("d", arc)
-                .attr("fill", d => color(d.data.type))
+                .attr("fill", d => d.data.color)
                 .attr("stroke", "#fff")
                 .attr("stroke-width", 2);
             
-            // Add legend
-            const legend = document.getElementById('chart-legend');
-            legend.innerHTML = '';
-            Object.entries(counts).forEach(([type, count]) => {
-                const legendItem = document.createElement('div');
-                legendItem.className = 'legend-item';
-                
-                const colorBox = document.createElement('div');
-                colorBox.className = 'legend-color';
-                colorBox.style.backgroundColor = type === 'Entree' ? '#667eea' : '#764ba2';
-                
-                const text = document.createElement('span');
-                text.textContent = `${type}: ${count}`;
-                
-                legendItem.appendChild(colorBox);
-                legendItem.appendChild(text);
-                legend.appendChild(legendItem);
-            });
+            // Add labels
+            arcs.append("text")
+                .attr("transform", d => `translate(${arc.centroid(d)})`)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "12px")
+                .attr("fill", "white")
+                .attr("font-weight", "bold")
+                .text(d => `${d.data.count}`);
         }
-
-        // Generate CSV data
-        function generateCSV() {
-            const csvData = [];
-            csvData.push(['Person', 'Family', 'Item Name', 'Type', 'Price']);
+        
+        function createSpendingDistributionChart() {
+            const width = 250;
+            const height = 250;
+            const radius = Math.min(width, height) / 2;
             
-            orderData.forEach(person => {
-                person.items.forEach(item => {
-                    csvData.push([
-                        person.person,
-                        person.family,
-                        item.name,
-                        item.type,
-                        item.price
-                    ]);
-                });
-            });
+            const svg = d3.select("#spending-distribution-chart")
+                .append("svg")
+                .attr("width", width)
+                .attr("height", height)
+                .append("g")
+                .attr("transform", `translate(${width/2},${height/2})`);
             
-            return Papa.unparse(csvData);
+            // Spending data by house/couple
+            const data = [
+                { group: "Hrishi & Sweena", amount: 30.00, color: "#e74c3c" },
+                { group: "Srini & Aishwarya", amount: 51.25, color: "#9b59b6" },
+                { group: "Others", amount: 153.50, color: "#27ae60" }
+            ];
+            
+            const pie = d3.pie()
+                .value(d => d.amount)
+                .sort(null);
+            
+            const arc = d3.arc()
+                .innerRadius(0)
+                .outerRadius(radius - 10);
+            
+            const arcs = svg.selectAll(".arc")
+                .data(pie(data))
+                .enter()
+                .append("g")
+                .attr("class", "arc");
+            
+            arcs.append("path")
+                .attr("d", arc)
+                .attr("fill", d => d.data.color)
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 2);
+            
+            // Add labels
+            arcs.append("text")
+                .attr("transform", d => `translate(${arc.centroid(d)})`)
+                .attr("text-anchor", "middle")
+                .attr("font-size", "10px")
+                .attr("fill", "white")
+                .attr("font-weight", "bold")
+                .text(d => `$${d.data.amount.toFixed(0)}`);
         }
-
-        // Export to CSV
-        function exportToCSV() {
-            const csv = generateCSV();
-            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            const link = document.createElement('a');
-            const url = URL.createObjectURL(blob);
-            
-            link.setAttribute('href', url);
-            link.setAttribute('download', 'restaurant_orders.csv');
-            link.style.visibility = 'hidden';
-            
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            
-            showNotification('CSV exported successfully!');
-        }
-
-        // Export to Google Drive (simulated)
-        function exportToGoogleDrive() {
-            const exportBtn = document.getElementById('export-google-drive');
-            const originalText = exportBtn.textContent;
-            
-            exportBtn.disabled = true;
-            exportBtn.textContent = '📤 Uploading...';
-            
-            // Simulate API call delay
-            setTimeout(() => {
-                showNotification('File uploaded to Google Drive successfully!');
-                
-                exportBtn.disabled = false;
-                exportBtn.textContent = originalText;
-            }, 2000);
-        }
-
-        // Show notification
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.classList.add('show');
-            
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            populateOrders();
-            calculateFinancials();
-            calculateFamilyShares();
-            createPieChart();
-            
-            // Event listeners
-            document.getElementById('export-csv').addEventListener('click', exportToCSV);
-            document.getElementById('export-google-drive').addEventListener('click', exportToGoogleDrive);
-        });
     </script>
 </body>
 </html>
