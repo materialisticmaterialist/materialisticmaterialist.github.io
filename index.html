@@ -47,6 +47,7 @@
             justify-content: center;
             gap: 15px;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
         
         .export-btn {
@@ -73,6 +74,66 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+        
+        .financial-summary {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        
+        .financial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .financial-item {
+            text-align: center;
+            padding: 10px;
+            background: rgba(102, 126, 234, 0.1);
+            border-radius: 10px;
+        }
+        
+        .financial-label {
+            font-size: 0.9rem;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .financial-value {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .family-shares {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .family-card {
+            background: rgba(118, 75, 162, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .family-name {
+            font-weight: bold;
+            color: #764ba2;
+            margin-bottom: 8px;
+        }
+        
+        .family-amount {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
         }
         
         .stats-container {
@@ -237,6 +298,10 @@
                 flex-direction: column;
                 align-items: center;
             }
+            
+            .financial-grid {
+                grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            }
         }
     </style>
 </head>
@@ -245,6 +310,32 @@
         <div class="header">
             <h1>🍽️ Restaurant Order Infographic</h1>
             <p>Detailed breakdown of the group's meal orders</p>
+        </div>
+        
+        <div class="financial-summary">
+            <div class="financial-grid">
+                <div class="financial-item">
+                    <div class="financial-label">Subtotal</div>
+                    <div class="financial-value" id="subtotal">$245.75</div>
+                </div>
+                <div class="financial-item">
+                    <div class="financial-label">HST (13%)</div>
+                    <div class="financial-value" id="hst">$30.65</div>
+                </div>
+                <div class="financial-item">
+                    <div class="financial-label">Gratuity (18%)</div>
+                    <div class="financial-value" id="gratuity">$42.44</div>
+                </div>
+                <div class="financial-item">
+                    <div class="financial-label">Total</div>
+                    <div class="financial-value" id="total">$318.84</div>
+                </div>
+            </div>
+            
+            <h3 style="text-align: center; color: #667eea; margin-bottom: 15px;">Family Shares</h3>
+            <div class="family-shares" id="family-shares">
+                <!-- Family shares will be populated by JavaScript -->
+            </div>
         </div>
         
         <div class="controls">
@@ -293,7 +384,7 @@
     </div>
 
     <script>
-        // Data structure
+        // Data structure with family relationships
         const orderData = [
             {
                 person: "Rutu",
@@ -302,68 +393,145 @@
                     { name: "Tropical Breeze", type: "Drink", price: 12.00 },
                     { name: "Tropical Breeze", type: "Drink", price: 12.00 },
                     { name: "Cold Brew Coffee", type: "Drink", price: 5.00 }
-                ]
+                ],
+                family: "Rutu"
             },
             {
                 person: "Hrishi",
                 items: [
                     { name: "Breakfast Sammy (Half)", type: "Entree", price: 9.50 },
                     { name: "Cold Brew Coffee", type: "Drink", price: 5.00 }
-                ]
+                ],
+                family: "Hrishi & Sweena"
             },
             {
                 person: "Sweena",
                 items: [
                     { name: "Breakfast Sammy (Half)", type: "Entree", price: 9.50 },
                     { name: "Whole Milk Latte", type: "Drink", price: 6.00 }
-                ]
+                ],
+                family: "Hrishi & Sweena"
             },
             {
                 person: "Srini",
                 items: [
                     { name: "Breakfast Sammy (Half)", type: "Entree", price: 9.50 },
                     { name: "Whole Milk Caramel Latte", type: "Drink", price: 6.50 }
-                ]
+                ],
+                family: "Srini & Aishwarya"
             },
             {
                 person: "Aishwarya",
                 items: [
                     { name: "Shakshuka", type: "Entree", price: 19.75 },
                     { name: "Whole Milk Matcha Latte", type: "Drink", price: 6.50 }
-                ]
+                ],
+                family: "Srini & Aishwarya"
             },
             {
                 person: "Kannada Dude",
                 items: [
                     { name: "Huevos In' Na Burrito", type: "Entree", price: 19.50 },
                     { name: "Raspberry Refresher", type: "Drink", price: 12.00 }
-                ]
+                ],
+                family: "Kannada Dude & Wife"
             },
             {
                 person: "KD's Wife",
                 items: [
                     { name: "Veggie Primavera", type: "Entree", price: 20.50 },
                     { name: "Whole Milk Vanilla Latte", type: "Drink", price: 6.50 }
-                ]
+                ],
+                family: "Kannada Dude & Wife"
             },
             {
                 person: "Tabrez",
                 items: [
                     { name: "Canadian Lobster & Shrimp Crepe", type: "Entree", price: 28.00 },
                     { name: "Pineapple Oasis", type: "Drink", price: 7.00 }
-                ]
+                ],
+                family: "Tabrez & Monjusha"
             },
             {
                 person: "Monjusha",
                 items: [
                     { name: "Whole Milk Latte", type: "Drink", price: 6.00 }
-                ]
+                ],
+                family: "Tabrez & Monjusha"
             }
         ];
+
+        // Calculate financials
+        function calculateFinancials() {
+            let subtotal = 0;
+            
+            orderData.forEach(person => {
+                person.items.forEach(item => {
+                    subtotal += item.price;
+                });
+            });
+            
+            const hst = 30.65; // Given in the problem
+            const gratuity = 42.44; // Given in the problem
+            const total = 318.84; // Given in the problem
+            
+            document.getElementById('subtotal').textContent = `$${subtotal.toFixed(2)}`;
+            document.getElementById('hst').textContent = `$${hst.toFixed(2)}`;
+            document.getElementById('gratuity').textContent = `$${gratuity.toFixed(2)}`;
+            document.getElementById('total').textContent = `$${total.toFixed(2)}`;
+            
+            return { subtotal, hst, gratuity, total };
+        }
+
+        // Calculate family shares
+        function calculateFamilyShares() {
+            const families = {};
+            
+            orderData.forEach(person => {
+                if (!families[person.family]) {
+                    families[person.family] = 0;
+                }
+                
+                person.items.forEach(item => {
+                    families[person.family] += item.price;
+                });
+            });
+            
+            // Add tax and gratuity proportionally
+            const { subtotal, hst, gratuity } = calculateFinancials();
+            const totalAdditional = hst + gratuity;
+            
+            const familySharesContainer = document.getElementById('family-shares');
+            familySharesContainer.innerHTML = '';
+            
+            Object.entries(families).forEach(([familyName, familySubtotal]) => {
+                const proportion = familySubtotal / subtotal;
+                const additionalCosts = totalAdditional * proportion;
+                const totalShare = familySubtotal + additionalCosts;
+                
+                const familyCard = document.createElement('div');
+                familyCard.className = 'family-card';
+                
+                const nameDiv = document.createElement('div');
+                nameDiv.className = 'family-name';
+                nameDiv.textContent = familyName;
+                
+                const amountDiv = document.createElement('div');
+                amountDiv.className = 'family-amount';
+                amountDiv.textContent = `$${totalShare.toFixed(2)}`;
+                
+                familyCard.appendChild(nameDiv);
+                familyCard.appendChild(amountDiv);
+                familySharesContainer.appendChild(familyCard);
+            });
+            
+            return families;
+        }
 
         // Populate orders list
         function populateOrders() {
             const container = document.getElementById('orders-list');
+            container.innerHTML = '';
             
             orderData.forEach(person => {
                 const personDiv = document.createElement('div');
@@ -371,7 +539,7 @@
                 
                 const nameDiv = document.createElement('div');
                 nameDiv.className = 'person-name';
-                nameDiv.textContent = person.person;
+                nameDiv.textContent = `${person.person} (${person.family})`;
                 
                 personDiv.appendChild(nameDiv);
                 
@@ -398,6 +566,9 @@
 
         // Create pie chart
         function createPieChart() {
+            // Clear previous chart
+            d3.select("#pie-chart").select("svg").remove();
+            
             const width = 300;
             const height = 300;
             const radius = Math.min(width, height) / 2;
@@ -439,6 +610,7 @@
             
             // Add legend
             const legend = document.getElementById('chart-legend');
+            legend.innerHTML = '';
             Object.entries(counts).forEach(([type, count]) => {
                 const legendItem = document.createElement('div');
                 legendItem.className = 'legend-item';
@@ -459,12 +631,13 @@
         // Generate CSV data
         function generateCSV() {
             const csvData = [];
-            csvData.push(['Person', 'Item Name', 'Type', 'Price']);
+            csvData.push(['Person', 'Family', 'Item Name', 'Type', 'Price']);
             
             orderData.forEach(person => {
                 person.items.forEach(item => {
                     csvData.push([
                         person.person,
+                        person.family,
                         item.name,
                         item.type,
                         item.price
@@ -503,8 +676,6 @@
             
             // Simulate API call delay
             setTimeout(() => {
-                // In a real implementation, you would use Google Drive API here
-                // This is a simulated version for demonstration
                 showNotification('File uploaded to Google Drive successfully!');
                 
                 exportBtn.disabled = false;
@@ -526,6 +697,8 @@
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             populateOrders();
+            calculateFinancials();
+            calculateFamilyShares();
             createPieChart();
             
             // Event listeners
